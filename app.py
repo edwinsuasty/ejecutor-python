@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import io
 import contextlib
+import os
 
 app = Flask(__name__)
 
@@ -20,3 +21,7 @@ def ejecutar():
         return jsonify({'resultado': buffer.getvalue()})
     except Exception as e:
         return jsonify({'resultado': f'Error: {str(e)}'})
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
