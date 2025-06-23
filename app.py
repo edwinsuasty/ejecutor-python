@@ -28,26 +28,36 @@ def ejecutar_python():
 @app.route('/sagemath', methods=['POST'])
 def ejecutar_sage():
     data = request.get_json()
-    codigo = data.get('code', '')
+    codigo = data.get('codigo', '')
 
     try:
+        payload = {
+            "code": codigo,
+            "opts": {"output": "text"}
+        }
         response = requests.post(
             "https://sagecell.sagemath.org/service",
-            json={"code": codigo},
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            json=payload,
             timeout=10
         )
-        result = response.json()
+        
+        try:
+            respuesta_json = response.json()
+        except ValueError:
+            return jsonify({
+                "success": False,
+                "stdout": "Error al contactar SageMathCell: Respuesta no válida",
+                "raw": response.text
+            })
+
         return jsonify({
             "success": True,
-            "stdout": result.get("stdout", "")
+            "stdout": respuesta_json.get("stdout", ""),
+            "stderr": respuesta_json.get("stderr", ""),
         })
+
     except Exception as e:
         return jsonify({
             "success": False,
             "stdout": f"Error al contactar SageMathCell: {str(e)}"
         })
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
