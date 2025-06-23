@@ -8,9 +8,9 @@ app = Flask(__name__)
 
 @app.route('/')
 def inicio():
-    return "Servidor activo para Python y SageMath."
+    return "Servidor de ejecución Python y SageMath activo."
 
-# Ejecuta código Python localmente
+# Endpoint para ejecutar código Python
 @app.route('/ejecutar', methods=['POST'])
 def ejecutar_python():
     data = request.get_json()
@@ -24,25 +24,29 @@ def ejecutar_python():
     except Exception as e:
         return jsonify({'resultado': f'Error: {str(e)}'})
 
-# Envía código a SageMathCell
+# Endpoint para ejecutar código SageMath
 @app.route('/sagemath', methods=['POST'])
-def ejecutar_sagemath():
+def ejecutar_sage():
     data = request.get_json()
-    codigo = data.get('codigo', '')
+    codigo = data.get('code', '')
 
     try:
         response = requests.post(
-            'https://sagecell.sagemath.org/service',
+            "https://sagecell.sagemath.org/service",
             json={"code": codigo},
-            timeout=20
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            timeout=10
         )
-        if response.status_code == 200:
-            resultado = response.json().get("stdout", "Sin salida")
-            return jsonify({'resultado': resultado})
-        else:
-            return jsonify({'resultado': f'Error HTTP: {response.status_code}'})
+        result = response.json()
+        return jsonify({
+            "success": True,
+            "stdout": result.get("stdout", "")
+        })
     except Exception as e:
-        return jsonify({'resultado': f'Error: {str(e)}'})
+        return jsonify({
+            "success": False,
+            "stdout": f"Error al contactar SageMathCell: {str(e)}"
+        })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
